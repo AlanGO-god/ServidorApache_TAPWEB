@@ -35,14 +35,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 ?>
 <!DOCTYPE html>
 <html lang="es">
-<head><meta charset="UTF-8"><title>Login - MiApp</title></head>
-<body>
-    <h2>Iniciar sesión</h2>
-    <?php if ($error): ?><p style="color:red;"><?= htmlspecialchars($error) ?></p><?php endif; ?>
-    <form method="POST" action="login.php">
-        <label>Email: <input type="email" name="email" required></label><br><br>
-        <label>Contraseña: <input type="password" name="password" required></label><br><br>
-        <button type="submit">Entrar</button>
-    </form>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - MiApp</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light d-flex align-items-center justify-content-center vh-100">
+
+    <div class="card shadow-sm p-4" style="width: 100%; max-width: 400px;">
+        <h3 class="card-title text-center mb-4">Iniciar sesión</h3>
+        
+        <?php if ($error): ?>
+            <div class="alert alert-danger py-2" role="alert">
+                <?= htmlspecialchars($error) ?>
+            </div>
+        <?php endif; ?>
+
+        <form method="POST" action="login.php">
+            <div class="mb-3">
+                <label for="email" class="form-label">Correo electrónico</label>
+                <input type="email" class="form-control" id="email" name="email" required>
+            </div>
+            <div class="mb-3">
+                <label for="password" class="form-label">Contraseña</label>
+                <input type="password" class="form-control" id="password" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary w-100">Entrar</button>
+        </form>
+    </div>
+
 </body>
 </html>
