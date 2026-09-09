@@ -1,6 +1,7 @@
 <?php
 
-class Product {
+class Producto
+{
     private $conn;
     private $table_name = "productos";
 
@@ -13,27 +14,16 @@ class Product {
     public $created_at;
     public $updated_at;
 
-    public function __construct($db) {
+    public function __construct($db)
+    {
         $this->conn = $db;
     }
 
-    public function getAll() {
-        $query = "SELECT * FROM " . $this->table_name . " ORDER BY id DESC";
-        $stmt = $this->conn->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchAll();
-    }
+    public function create()
+    {
+        $query = "INSERT INTO " . $this->table_name . " 
+                  SET sku=:sku, name=:name, description=:description, price=:price, stock=:stock, created_at=:created_at";
 
-    public function getById($id) {
-        $query = "SELECT * FROM " . $this->table_name . " WHERE id = :id LIMIT 1";
-        $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id", $id);
-        $stmt->execute();
-        return $stmt->fetch();
-    }
-
-    public function create() {
-        $query = "INSERT INTO " . $this->table_name . " (sku, name, description, price, stock) VALUES (:sku, :name, :description, :price, :stock)";
         $stmt = $this->conn->prepare($query);
 
         $this->sku = htmlspecialchars(strip_tags($this->sku));
@@ -41,21 +31,65 @@ class Product {
         $this->description = htmlspecialchars(strip_tags($this->description));
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->stock = htmlspecialchars(strip_tags($this->stock));
+        $this->created_at = date('Y-m-d H:i:s');
 
         $stmt->bindParam(":sku", $this->sku);
         $stmt->bindParam(":name", $this->name);
         $stmt->bindParam(":description", $this->description);
         $stmt->bindParam(":price", $this->price);
         $stmt->bindParam(":stock", $this->stock);
+        $stmt->bindParam(":created_at", $this->created_at);
 
         if ($stmt->execute()) {
-            return $this->conn->lastInsertId();
+            $this->id = $this->conn->lastInsertId();
+            return true;
         }
         return false;
     }
 
-    public function update() {
-        $query = "UPDATE " . $this->table_name . " SET sku = :sku, name = :name, description = :description, price = :price, stock = :stock WHERE id = :id";
+    public function read()
+    {
+        $query = "SELECT id, sku, name, description, price, stock, created_at, updated_at 
+                  FROM " . $this->table_name . " 
+                  ORDER BY created_at DESC";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->execute();
+        return $stmt;
+    }
+
+    public function readOne()
+    {
+        $query = "SELECT id, sku, name, description, price, stock, created_at, updated_at 
+                  FROM " . $this->table_name . " 
+                  WHERE id = :id 
+                  LIMIT 1";
+
+        $stmt = $this->conn->prepare($query);
+        $stmt->bindParam(":id", $this->id);
+        $stmt->execute();
+
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($row) {
+            $this->sku = $row['sku'];
+            $this->name = $row['name'];
+            $this->description = $row['description'];
+            $this->price = $row['price'];
+            $this->stock = $row['stock'];
+            $this->created_at = $row['created_at'];
+            $this->updated_at = $row['updated_at'];
+            return true;
+        }
+        return false;
+    }
+
+    public function update()
+    {
+        $query = "UPDATE " . $this->table_name . " 
+                  SET sku = :sku, name = :name, description = :description, price = :price, stock = :stock 
+                  WHERE id = :id";
+
         $stmt = $this->conn->prepare($query);
 
         $this->id = htmlspecialchars(strip_tags($this->id));
@@ -65,20 +99,31 @@ class Product {
         $this->price = htmlspecialchars(strip_tags($this->price));
         $this->stock = htmlspecialchars(strip_tags($this->stock));
 
-        $stmt->bindParam(":id", $this->id);
-        $stmt->bindParam(":sku", $this->sku);
-        $stmt->bindParam(":name", $this->name);
-        $stmt->bindParam(":description", $this->description);
-        $stmt->bindParam(":price", $this->price);
-        $stmt->bindParam(":stock", $this->stock);
+        $stmt->bindParam(':id', $this->id);
+        $stmt->bindParam(':sku', $this->sku);
+        $stmt->bindParam(':name', $this->name);
+        $stmt->bindParam(':description', $this->description);
+        $stmt->bindParam(':price', $this->price);
+        $stmt->bindParam(':stock', $this->stock);
 
-        return $stmt->execute();
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
     }
 
-    public function delete($id) {
+    public function delete()
+    {
         $query = "DELETE FROM " . $this->table_name . " WHERE id = :id";
+
         $stmt = $this->conn->prepare($query);
-        $stmt->bindParam(":id", $id);
-        return $stmt->execute();
+        $this->id = htmlspecialchars(strip_tags($this->id));
+        $stmt->bindParam(':id', $this->id);
+
+        if ($stmt->execute()) {
+            return true;
+        }
+        return false;
     }
 }
+?>

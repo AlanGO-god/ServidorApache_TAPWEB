@@ -1,94 +1,154 @@
 <?php
-require_once __DIR__ . '/../../models/Product.php';
 
-class ProductResource {
+require_once '../config/database.php';
+require_once '../models/Producto.php';
+
+class ProductoResources
+{
     private $db;
-    private $product;
+    private $producto;
 
-    public function __construct($database) {
-        $this->db = $database;
-        $this->product = new Product($this->db);
+    public function __construct()
+    {
+        $database = new Database();
+        $this->db = $database->getConnection();
+        $this->producto = new Producto($this->db);
     }
 
-    public function index() {
-        $result = $this->product->getAll();
-        http_response_code(200);
-        echo json_encode(["status" => "success", "data" => $result]);
-    }
+    // GET /api/v1/productos
+    public function index()
+    {
+        header("Content-Type: application/json");
 
-    public function show($id) {
-        $result = $this->product->getById($id);
-        if ($result) {
+        $stmt = $this->producto->read();
+        $num = $stmt->rowCount();
+
+        if ($num > 0) {
+            $productos_arr = array();
+            $productos_arr["records"] = array();
+
+            while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+                extract($row);
+                $producto_item = array(
+                    "id" => $id,
+                    "sku" => $sku,
+                    "name" => $name,
+                    "description" => $description,
+                    "price" => $price,
+                    "stock" => $stock,
+                    "created_at" => $created_at,
+                    "updated_at" => $updated_at
+                );
+                array_push($productos_arr["records"], $producto_item);
+            }
+
             http_response_code(200);
-            echo json_encode(["status" => "success", "data" => $result]);
+            echo json_encode($productos_arr);
         } else {
-            http_response_code(404);
-            echo json_encode(["status" => "error", "message" => "Producto no encontrado"]);
+            http_response_code(200);
+            echo json_encode(array("records" => array()));
         }
     }
 
-    public function store() {
+    // GET /api/v1/productos/{id}
+    public function show($id)
+    {
+        header("Content-Type: application/json");
+
+        $this->producto->id = $id;
+
+        if ($this->producto->readOne()) {
+            $producto_arr = array(
+                "id" => $this->producto->id,
+                "sku" => $this->producto->sku,
+                "name" => $this->producto->name,
+                "description" => $this->producto->description,
+                "price" => $this->producto->price,
+                "stock" => $this->producto->stock,
+                "created_at" => $this->producto->created_at,
+                "updated_at" => $this->producto->updated_at
+            );
+
+            http_response_code(200);
+            echo json_encode($producto_arr);
+        } else {
+            http_response_code(404);
+            echo json_encode(array("message" => "Producto no encontrado"));
+        }
+    }
+
+    // POST /api/v1/productos
+    public function store()
+    {
+        header("Content-Type: application/json");
+
         $data = json_decode(file_get_contents("php://input"));
 
         if (!empty($data->sku) && !empty($data->name) && isset($data->price)) {
-            $this->product->sku = $data->sku;
-            $this->product->name = $data->name;
-            $this->product->description = $data->description ?? '';
-            $this->product->price = $data->price;
-            $this->product->stock = $data->stock ?? 0;
+            $this->producto->sku = $data->sku;
+            $this->producto->name = $data->name;
+            $this->producto->description = $data->description ?? '';
+            $this->producto->price = $data->price;
+            $this->producto->stock = $data->stock ?? 0;
 
-            $newId = $this->product->create();
-            if ($newId) {
+            if ($this->producto->create()) {
                 http_response_code(201);
-                echo json_encode(["status" => "success", "message" => "Producto creado exitosamente", "id" => $newId]);
+                echo json_encode(array(
+                    "message" => "Producto creado exitosamente",
+                    "id" => $this->producto->id
+                ));
             } else {
-                http_response_code(500);
-                echo json_encode(["status" => "error", "message" => "No se pudo crear el producto. Verifique que el SKU sea único."]);
+                http_response_code(503);
+                echo json_encode(array("message" => "No se pudo crear el producto"));
             }
         } else {
             http_response_code(400);
-            echo json_encode(["status" => "error", "message" => "Datos incompletos. Se requiere SKU, nombre y precio."]);
+            echo json_encode(array("message" => "Datos incompletos"));
         }
     }
 
-    public function update($id) {
+    // PUT /api/v1/productos/{id}
+    public function update($id)
+    {
+        header("Content-Type: application/json");
+
         $data = json_decode(file_get_contents("php://input"));
-        $existing = $this->product->getById($id);
 
-        if (!$existing) {
-            http_response_code(404);
-            echo json_encode(["status" => "error", "message" => "Producto no encontrado"]);
-            return;
-        }
+        $this->producto->id = $id;
 
-        $this->product->id = $id;
-        $this->product->sku = $data->sku ?? $existing['sku'];
-        $this->product->name = $data->name ?? $existing['name'];
-        $this->product->description = $data->description ?? $existing['description'];
-        $this->product->price = $data->price ?? $existing['price'];
-        $this->product->stock = $data->stock ?? $existing['stock'];
+        if (!empty($data->sku) && !empty($data->name) && isset($data->price)) {
+            $this->producto->sku = $data->sku;
+            $this->producto->name = $data->name;
+            $this->producto->description = $data->description ?? '';
+            $this->producto->price = $data->price;
+            $this->producto->stock = $data->stock ?? 0;
 
-        if ($this->product->update()) {
-            http_response_code(200);
-            echo json_encode(["status" => "success", "message" => "Producto actualizado correctamente"]);
-        } else {
-            http_response_code(500);
-            echo json_encode(["status" => "error", "message" => "Error al actualizar el producto"]);
-        }
-    }
-
-    public function destroy($id) {
-        if ($this->product->getById($id)) {
-            if ($this->product->delete($id)) {
+            if ($this->producto->update()) {
                 http_response_code(200);
-                echo json_encode(["status" => "success", "message" => "Producto eliminado"]);
+                echo json_encode(array("message" => "Producto actualizado exitosamente"));
             } else {
-                http_response_code(500);
-                echo json_encode(["status" => "error", "message" => "Error al eliminar el producto"]);
+                http_response_code(503);
+                echo json_encode(array("message" => "No se pudo actualizar el producto"));
             }
         } else {
-            http_response_code(404);
-            echo json_encode(["status" => "error", "message" => "Producto no encontrado"]);
+            http_response_code(400);
+            echo json_encode(array("message" => "Datos incompletos"));
+        }
+    }
+
+    // DELETE /api/v1/productos/{id}
+    public function destroy($id)
+    {
+        header("Content-Type: application/json");
+
+        $this->producto->id = $id;
+
+        if ($this->producto->delete()) {
+            http_response_code(200);
+            echo json_encode(array("message" => "Producto eliminado exitosamente"));
+        } else {
+            http_response_code(503);
+            echo json_encode(array("message" => "No se pudo eliminar el producto"));
         }
     }
 }

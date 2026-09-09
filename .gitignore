@@ -3,3 +3,6 @@ config/db.php
 .env
 vendor/
 node_modules/
+docker/*
+Dockerfile
+docker-compose.yml
