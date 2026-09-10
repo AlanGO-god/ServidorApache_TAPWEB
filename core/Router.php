@@ -11,16 +11,17 @@ class Router
         $this->basePath = rtrim($basePath, '/');
     }
 
-    public function addRoute($method, $path, $handler)
+    public function addRoute($method, $path, $handler, $middleware = null)
     {
         $this->routes[] = [
             'method' => strtoupper($method),
             'path' => "/api/{$this->version}" . $path,
-            'handler' => $handler
+            'handler' => $handler,
+            'middleware' => $middleware
         ];
     }
 
-    public function dispatch()
+    public function dispatch(): bool
     {
         $method = $_SERVER['REQUEST_METHOD'];
         $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
@@ -28,8 +29,6 @@ class Router
         if (!empty($this->basePath) && strpos($uri, $this->basePath) === 0) {
             $uri = substr($uri, strlen($this->basePath));
         }
-
-        // Asegurar que la URI comience con 
         $uri = '/' . ltrim($uri, '/');
 
         foreach ($this->routes as $route) {
@@ -38,12 +37,17 @@ class Router
 
             if ($route['method'] === $method && preg_match($pattern, $uri, $matches)) {
                 array_shift($matches);
-                return call_user_func_array($route['handler'], $matches);
+
+                if ($route['middleware'] !== null && call_user_func($route['middleware']) === false) {
+                    return true; // el middleware ya respondió 401
+                }
+
+                call_user_func_array($route['handler'], $matches);
+                return true;
             }
         }
-
-        http_response_code(404);
-        echo json_encode(['message' => 'Ruta no encontrada', 'uri' => $uri]);
+        return false;
     }
+
 }
 ?>

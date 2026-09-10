@@ -16,6 +16,33 @@ CREATE TABLE IF NOT EXISTS productos (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE IF NOT EXISTS api_users (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    status ENUM('ACTIVE','INACTIVE') DEFAULT 'ACTIVE',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS api_tokens (
+    id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
+    user_id BIGINT UNSIGNED NOT NULL,
+    token VARCHAR(255) NOT NULL UNIQUE,
+    expires_at DATETIME NOT NULL,
+    revoked BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT fk_api_tokens_user
+    FOREIGN KEY (user_id)
+    REFERENCES api_users(id)
+    ON DELETE CASCADE
+);
+
+-- Usuario de prueba: username "admin", password "MiClaveSegura123"
+INSERT INTO api_users (username, email, password_hash) VALUES
+('admin', 'admin@example.com', '$2y$10$eIsrYZBZPHHYBfRFh.JY0u6IpgRtOQp14CLsgSdWEMQEc0P0B2Qey');
+
 -- 1. Insertar 10 registros en la tabla 'users'
 INSERT INTO users (name, email) VALUES
 ('Juan Pérez', 'juan.perez@example.com'),
@@ -41,3 +68,4 @@ INSERT INTO productos (sku, name, description, price, stock) VALUES
 ('PROD-008', 'Disco Duro Externo 2TB', 'Unidad de almacenamiento portátil USB 3.0', 75.25, 60),
 ('PROD-009', 'Cámara Web Full HD', 'Webcam 1080p con micrófono estéreo integrado para videollamadas', 55.00, 30),
 ('PROD-010', 'Escritorio Elevable', 'Escritorio con ajuste de altura eléctrico y memoria de posiciones', 450.00, 8);
+
