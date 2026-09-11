@@ -7,6 +7,11 @@ require_once '../core/Middleware/AuthMiddleware.php';
 require_once '../resources/v2/AuthResource.php';
 require_once '../models/Tarea.php';
 require_once '../resources/v1/TareaResource.php';
+require_once '../models/PasswordPolicy.php';
+require_once '../core/services/PasswordGenerator.php';
+require_once '../core/services/PasswordValidator.php';
+require_once '../resources/v1/PasswordResource.php';
+require_once '../resources/v1/PasswordAuthResource.php';
 
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
 $basePath = $scriptName;
@@ -15,6 +20,8 @@ $userResource = new UserResource();
 $productResource = new ProductoResources();
 $authResource = new AuthResource();
 $tareaResource = new TareaResource();
+$passwordResource = new PasswordResource();
+$passwordAuthResource = new PasswordAuthResource();
 
 // --- v1 (sin cambios, como ya la entregaste) ---
 $routerV1 = new Router('v1', $basePath);
@@ -29,10 +36,18 @@ $routerV1->addRoute('POST', '/productos', [$productResource, 'store']);
 $routerV1->addRoute('PUT', '/productos/{id}', [$productResource, 'update']);
 $routerV1->addRoute('DELETE', '/productos/{id}', [$productResource, 'destroy']);
 
+// --- v1 open routes for TareaResource
 $routerV1->addRoute('GET', '/tareas', [$tareaResource, 'index']);
 $routerV1->addRoute('GET', '/tareas/{id}', [$tareaResource, 'show']);
 $routerV1->addRoute('POST', '/tareas', [$tareaResource, 'store']);
 $routerV1->addRoute('PUT', '/tareas/{id}', [$tareaResource, 'update']);
+
+// --- v1 open routes for PasswordResource and PasswordAuthResource
+$routerV1->addRoute('POST', '/passwords/generate', [$passwordResource, 'generate']);
+$routerV1->addRoute('POST', '/passwords/validate', [$passwordResource, 'validate']);
+$routerV1->addRoute('GET', '/passwords/policy', [$passwordResource, 'policy']);
+$routerV1->addRoute('POST', '/auth/register', [$passwordAuthResource, 'register']);
+$routerV1->addRoute('POST', '/auth/login', [$passwordAuthResource, 'login']);
 
 // --- v2 (con autenticación) ---
 $routerV2 = new Router('v2', $basePath);
