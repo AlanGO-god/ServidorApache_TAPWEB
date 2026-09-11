@@ -5,6 +5,8 @@ require_once '../resources/v1/UserResources.php';
 require_once '../resources/v1/ProductoResources.php';
 require_once '../core/Middleware/AuthMiddleware.php';
 require_once '../resources/v2/AuthResource.php';
+require_once '../models/Tarea.php';
+require_once '../resources/v1/TareaResource.php';
 
 $scriptName = dirname($_SERVER['SCRIPT_NAME']);
 $basePath = $scriptName;
@@ -12,6 +14,7 @@ $basePath = $scriptName;
 $userResource = new UserResource();
 $productResource = new ProductoResources();
 $authResource = new AuthResource();
+$tareaResource = new TareaResource();
 
 // --- v1 (sin cambios, como ya la entregaste) ---
 $routerV1 = new Router('v1', $basePath);
@@ -25,6 +28,11 @@ $routerV1->addRoute('GET', '/productos/{id}', [$productResource, 'show']);
 $routerV1->addRoute('POST', '/productos', [$productResource, 'store']);
 $routerV1->addRoute('PUT', '/productos/{id}', [$productResource, 'update']);
 $routerV1->addRoute('DELETE', '/productos/{id}', [$productResource, 'destroy']);
+
+$routerV1->addRoute('GET', '/tareas', [$tareaResource, 'index']);
+$routerV1->addRoute('GET', '/tareas/{id}', [$tareaResource, 'show']);
+$routerV1->addRoute('POST', '/tareas', [$tareaResource, 'store']);
+$routerV1->addRoute('PUT', '/tareas/{id}', [$tareaResource, 'update']);
 
 // --- v2 (con autenticación) ---
 $routerV2 = new Router('v2', $basePath);
@@ -54,4 +62,7 @@ if (!$routerV1->dispatch()) {
         echo json_encode(["message" => "Ruta no encontrada"]);
     }
 }
+
+// -- v1 open routes for TareaResource
+
 ?>

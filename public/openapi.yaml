@@ -1,0 +1,112 @@
+openapi: 3.0.3
+info:
+  title: API de Gestión de Tareas
+  description: Contrato de la API para el manejo de tareas, diseñado siguiendo el paradigma API-First.
+  version: 1.0.0
+servers:
+  - url: /api/v1
+    description: Servidor de la práctica (TAPWEB)
+paths:
+  /tareas:
+    get:
+      summary: Listar todas las tareas
+      operationId: listarTareas
+      responses:
+        '200':
+          description: Lista de tareas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tarea'
+    post:
+      summary: Crear una nueva tarea
+      operationId: crearTarea
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevaTarea'
+      responses:
+        '201':
+          description: Tarea creada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tarea'
+        '400':
+          description: Datos inválidos
+  /tareas/{id}:
+    get:
+      summary: Obtener una tarea por ID
+      operationId: obtenerTarea
+      parameters:
+        - $ref: '#/components/parameters/TareaId'
+      responses:
+        '200':
+          description: Tarea encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tarea'
+        '404':
+          description: Tarea no encontrada
+    put:
+      summary: Actualizar una tarea existente
+      operationId: actualizarTarea
+      parameters:
+        - $ref: '#/components/parameters/TareaId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NuevaTarea'
+      responses:
+        '200':
+          description: Tarea actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tarea'
+        '404':
+          description: Tarea no encontrada
+components:
+  parameters:
+    TareaId:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: integer
+      description: ID de la tarea
+  schemas:
+    Tarea:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        titulo:
+          type: string
+          example: Estudiar API-First
+        completada:
+          type: boolean
+          example: false
+        fecha_creacion:
+          type: string
+          format: date-time
+          example: "2026-09-07T10:00:00Z"
+    NuevaTarea:
+      type: object
+      required:
+        - titulo
+      properties:
+        titulo:
+          type: string
+          example: Estudiar API-First
+        completada:
+          type: boolean
+          default: false
